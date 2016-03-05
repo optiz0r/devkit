@@ -59,18 +59,19 @@ sub available_packages {
 sub calculate_missing {
     my $package = shift;
     my $depth = shift;
+    my @Installed_Packages = shift;
+    my @Available_Packages = shift;
 
     # Getting the package dependencies and the installed packages
     say "[$package] Getting the package dependencies and the installed packages";
     my @Packages = package_deps( $package, $depth, 1 );
-    my @Installed_Packages = qx/equo q --quiet list installed/;
     chomp(@Installed_Packages);
     say "[$package] Getting the package dependencies and the installed packages";
 
     #taking only the 4th column of output as key of the hashmap
     my %installed_packs =
       map { ( split( /\s/, $_ ) )[3] => 1 } @Installed_Packages;
-    my %available_packs = map { $_ => 1 } available_packages();
+    my %available_packs = map { $_ => 1 } @Available_Packages;
 
 # removing from packages the one that are already installed and keeping only the available in the entropy repositories
     my @to_install = grep( defined $available_packs{$_},
@@ -184,10 +185,12 @@ qx|echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf|;    #just plain evil
 my @packages = @ARGV;
 
 if ($use_equo) {
+    my @Installed_Packages = qx/equo q list installed --quiet/;
+    my @Available_Packages = available_packages();
     my @packages_deps;
     foreach my $p (@packages) {
       say "[$p] Getting the package dependencies which aren't already installed on the system.. ";
-        push( @packages_deps, calculate_missing( $p , 2) )
+        push( @packages_deps, calculate_missing( $p , 2, @Installed_Packages, @Available_Packages) )
           if $equo_install_atoms;
         push( @packages_deps, package_deps( $p, 2, 0 ) )
           if $equo_install_version;
