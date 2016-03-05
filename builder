@@ -104,7 +104,7 @@ sub help {
 say
 "************* IF YOU WANT TO SUPPLY ADDITIONAL ARGS TO EMERGE, pass to docker EMERGE_DEFAULT_OPTS env with your options *************";
 
-if ( @overlays > 0 ) {
+if ( scalar @overlays > 0 ) {
     say "Overlay(s) to add";
     foreach my $overlay (@overlays) {
         say "\t- $overlay";
@@ -200,13 +200,15 @@ if ($use_equo) {
     say "", "[install] Installing missing dependencies with equo", @packages_deps, "";
     if ($equo_split_install) {
         system("equo i --bdeps $_") for (@packages_deps,@equo_install);
-        if (@equo_remove > 0){
+        if (scalar @equo_remove > 0){
           system("equo rm --nodeps $_") for (@equo_remove);
         }
     }
     else {
-        system("equo i --bdeps @packages_deps @equo_install");
-        if (@equo_remove > 0){
+        if (scalar @packages_deps > 0 || scalar @equo_install > 0) {
+          system("equo i --bdeps @packages_deps @equo_install");
+	}
+        if (scalar @equo_remove > 0){
           system("equo rm --nodeps @equo_remove");
         }
     }
